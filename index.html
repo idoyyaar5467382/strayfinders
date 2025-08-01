@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StrayFinder - All in One</title>
+<style>
+  :root {
+    --khaki: #f0e68c;
+    --apricot: #fbceb1;
+    --text-dark: #333;
+    --apricot-dark: #e6b191;
+  }
+  body {
+    margin:0; padding:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--khaki); color: var(--text-dark);
+    scroll-behavior: smooth;
+  }
+  header {
+    background: var(--apricot);
+    padding: 1rem 2rem;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.8rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  nav {
+    background: #d6b57c;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 0.8rem 0;
+  }
+  nav a {
+    color: var(--text-dark);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+  nav a:hover {
+    color: #8c674a;
+    text-decoration: underline;
+  }
+  main {
+    max-width: 720px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  section {
+    background: #fff8f0;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #ccc;
+    padding: 1.8rem 2rem;
+    margin-bottom: 3rem;
+  }
+  h2 {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #6b4c3b;
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  input, textarea {
+    padding: 0.85rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1.5px solid #c5a880;
+    font-family: inherit;
+    resize: vertical;
+  }
+  input:focus, textarea:focus {
+    outline: 2px solid #a9745f;
+    border-color: #a9745f;
+  }
+  button {
+    padding: 0.95rem;
+    border-radius: 6px;
+    border: none;
+    background-color: var(--apricot);
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background-color: var(--apricot-dark);
+  }
+  #logoutBtn {
+    max-width: 400px;
+    margin: 1rem auto 0;
+    display: none;
+    background-color: #a9745f;
+    color: white;
+  }
+  #logoutBtn:hover {
+    background-color: #8c674a;
+  }
+  #userEmail {
+    text-align: center;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    color: #6b4c3b;
+  }
+  #feedbackMsg {
+    text-align: center;
+    min-height: 1.3em;
+    font-weight: 600;
+    margin-top: 0.5rem;
+  }
+  ul#reportsList {
+    list-style: none;
+    padding-left: 0;
+    max-width: 600px;
+    margin: 2rem auto 0;
+  }
+  ul#reportsList li {
+    background: var(--khaki);
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px #d3c59f;
+    font-size: 0.95rem;
+  }
+  img.cat-pic {
+    display: block;
+    max-width: 130px;
+    margin: 0.5rem auto 1.8rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  /* Responsive */
+  @media (max-width: 480px) {
+    nav {
+      gap: 1rem;
+      font-size: 0.9rem;
+    }
+    main {
+      padding: 0 1rem;
+    }
+    form {
+      max-width: 100%;
+    }
+  }
+</style>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    serverTimestamp,
+    query,
+    orderBy
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // === REPLACE with YOUR Firebase config ===
+  const firebaseConfig = {
+    apiKey: "AIzaSyDXzBt6F7yvZi5MOiSr2rqjqWlSMaOJtjc",
+    authDomain: "strayfinder-efabf.firebaseapp.com",
+    projectId: "strayfinder-efabf",
+    storageBucket: "strayfinder-efabf.firebasestorage.app",
+    messagingSenderId: "396579146927",
+    appId: "1:396579146927:web:1e57ad87542c700fb3585a",
+    measurementId: "G-EXE6DRSR0J"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  window.onload = () => {
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const reportForm = document.getElementById('reportForm');
+    const reportsList = document.getElementById('reportsList');
+    const userEmailDisplay = document.getElementById('userEmail');
+    const feedbackMsg = document.getElementById('feedbackMsg');
+
+    function showFeedback(msg, isError = false) {
+      feedbackMsg.textContent = msg;
+      feedbackMsg.style.color = isError ? 'crimson' : 'green';
+      setTimeout(() => { feedbackMsg.textContent = ''; }, 4000);
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if (user) {
+        userEmailDisplay.textContent = `Logged in as: ${user.email}`;
+        logoutBtn.style.display = 'block';
+        loginForm.style.display = 'none';
+        signupForm.style.display = 'none';
+        reportForm.style.display = 'block';
+        await loadReports();
+      } else {
+        userEmailDisplay.textContent = '';
+        logoutBtn.style.display = 'none';
+        loginForm.style.display = 'block';
+        signupForm.style.display = 'block';
+        reportForm.style.display = 'block'; // show form but disable submit for non-logged in
+        await loadReports();
+      }
+    });
+
+    loginForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const email = loginForm['loginEmail'].value;
+      const password = loginForm['loginPassword'].value;
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          loginForm.reset();
+          showFeedback('Login successful!');
+        })
+        .catch(err => showFeedback(err.message, true));
+    });
+
+    signupForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const email = signupForm['signupEmail'].value;
+      const password = signupForm['signupPassword'].value;
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          signupForm.reset();
+          showFeedback('Account created!');
+        })
+        .catch(err => showFeedback(err.message, true));
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      signOut(auth)
+        .then(() => showFeedback('Logged out successfully!'))
+        .catch(err => showFeedback(err.message, true));
+    });
+
+    reportForm.addEventListener('submit', async e => {
+      e.preventDefault();
+
+      if (!auth.currentUser) {
+        showFeedback('Please log in to submit a report.', true);
+        return;
+      }
+
+      const location = reportForm['location'].value.trim();
+      const description = reportForm['description'].value.trim();
+
+      if (!location || !description) {
+        showFeedback('Please fill all report fields.', true);
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "catReports"), {
+          user: auth.currentUser.email,
+          location,
+          description,
+          timestamp: serverTimestamp()
+        });
+        reportForm.reset();
+        showFeedback('Report submitted!');
+        displaySubmissionConfirmation();
+        await loadReports();
+      } catch (err) {
+        showFeedback('Failed to submit report: ' + err.message, true);
+      }
+    });
+
+    function displaySubmissionConfirmation() {
+      // Create a temporary message below the submit button
+      const confirmation = document.createElement('p');
+      confirmation.textContent = "Submission confirmed ✅";
+      confirmation.style.color = 'green';
+      confirmation.style.fontWeight = '700';
+      confirmation.style.textAlign = 'center';
+      confirmation.style.marginTop = '0.5rem';
+      confirmation.style.fontSize = '1.1rem';
+      confirmation.style.userSelect = 'none';
+
+      // Add confirmation message just below the form's submit button
+      const submitButton = reportForm.querySelector('button[type="submit"]');
+      // Remove any existing confirmation messages first
+      const existing = reportForm.querySelector('.submission-confirmation');
+      if (existing) existing.remove();
+      confirmation.classList.add('submission-confirmation');
+      submitButton.insertAdjacentElement('afterend', confirmation);
+
+      // Remove confirmation message after 4 seconds
+      setTimeout(() => {
+        confirmation.remove();
+      }, 4000);
+    }
+
+    async function loadReports() {
+      reportsList.innerHTML = '';
+      try {
+        const q = query(collection(db, "catReports"), orderBy("timestamp", "desc"));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+          reportsList.innerHTML = '<li>No reports yet. Be the first!</li>';
+          return;
+        }
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const li = document.createElement('li');
+          const time = data.timestamp?.toDate().toLocaleString() || 'Just now';
+          li.innerHTML = `<strong>${data.location}</strong> - ${data.description} <br><em>by ${data.user} at ${time}</em>`;
+          reportsList.appendChild(li);
+        });
+      } catch (err) {
+        reportsList.innerHTML = `<li style="color:red;">Failed to load reports: ${err.message}</li>`;
+      }
+    }
+  };
+</script>
+</head>
+<body>
+  <header>
+    StrayFinder 🐱
+  </header>
+
+  <nav>
+    <a href="#auth-section">Login/Signup</a>
+    <a href="#report-section">Report a Cat</a>
+    <a href="#reports-section">Recent Reports</a>
+    <a href="#about-section">About Us</a>
+  </nav>
+
+  <main>
+
+    <!-- Auth Section -->
+    <section id="auth-section" aria-label="User Authentication">
+      <img src="https://i.imgur.com/E3z3C1B.jpg" alt="Stray cat" class="cat-pic" />
+      <form id="loginForm" aria-label="Login form">
+        <h2>Login</h2>
+        <input type="email" id="loginEmail" placeholder="Email" required autocomplete="username" />
+        <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password" />
+        <button type="submit">Log In</button>
+      </form>
+
+      <form id="signupForm" aria-label="Signup form" style="margin-top: 2rem;">
+        <h2>Create Account</h2>
+        <input type="email" id="signupEmail" placeholder="Email" required autocomplete="email" />
+        <input type="password" id="signupPassword" placeholder="Password" required autocomplete="new-password" />
+        <button type="submit">Sign Up</button>
+      </form>
+
+      <button id="logoutBtn" aria-label="Logout button">Log Out</button>
+      <p id="userEmail" aria-live="polite"></p>
+      <p id="feedbackMsg" aria-live="polite"></p>
+    </section>
+
+    <!-- Report Section -->
+    <section id="report-section" aria-label="Report a stray cat">
+      <h2>📍 Report a Stray Cat</h2>
+      <form id="reportForm" aria-label="Report a stray cat form" style="max-width: 400px; margin: 0 auto;">
+        <input type="text" id="location" placeholder="Location (e.g. park near Tel Aviv)" required />
+        <textarea id="description" rows="3" placeholder="Description (fed? injured? color?)" required></textarea>
+        <button type="submit">Submit Report</button>
+      </form>
+      <p style="text-align:center; font-style: italic; margin-top: 1rem; color:#6b4c3b;">
+        Please log in to submit a report so others nearby can help.
+      </p>
+    </section>
+
+    <!-- Recent Reports -->
+    <section id="reports-section" aria-label="Recent stray cat reports">
+      <h2>🐾 Recent Reports</h2>
+      <ul id="reportsList" aria-live="polite"></ul>
+    </section>
+
+    <!-- About Section -->
+    <section id="about-section" aria-label="About StrayFinder" style="margin-bottom: 4rem;">
+      <h2>About StrayFinder</h2>
+      <img src="https://i.imgur.com/E3z3C1B.jpg" alt="Stray cat" class="cat-pic" />
+      <p>
+        StrayFinder was founded by a passionate group of animal lovers dedicated to improving the lives of stray cats worldwide. Our mission is to create a supportive community platform where anyone can easily report sightings and needs of stray cats, ensuring timely help and care.
+      </p>
+      <p>
+        Our founders — Malak, Ido, Yalee, and Ahmad — believe that every stray cat deserves compassion, shelter, and food. They envisioned a simple, accessible app that connects neighbors, volunteers, and animal welfare organizations to collaboratively protect and nurture these vulnerable creatures.
+      </p>
+      <p>
+        Goals of StrayFinder include:
+      </p>
+      <ul>
+        <li>Empowering local communities to identify and assist stray cats efficiently.</li>
+        <li>Reducing stray cat suffering by facilitating quick reporting and responses.</li>
+        <li>Raising awareness about the importance of humane animal treatment and responsible pet ownership.</li>
+        <li>Building partnerships with shelters, vets, and animal rescue groups for coordinated support.</li>
+        <li>Encouraging volunteerism and community engagement in animal welfare.</li>
+      </ul>
+      <p>
+        Looking ahead, StrayFinder aims to expand globally, incorporate features like real-time mapping, foster networks, and educational resources to help people become better caregivers. We invite you to join our compassionate community — together, we can make a difference, one cat at a time.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
