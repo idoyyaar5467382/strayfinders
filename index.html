@@ -138,9 +138,10 @@
     button:hover, input:hover, textarea:hover {
       transform: scale(1.02);
     }
+
     #activeUserCount {
       text-align: center;
-      margin-top: 1rem;
+      margin: 1rem auto;
       font-size: 1.2rem;
       font-weight: bold;
       color: var(--white);
@@ -193,6 +194,8 @@
 <body>
   <header>StrayFinder 🐾</header>
 
+  <p id="activeUserCount">Active users: 0</p>
+
   <div id="burgerBtn">
     <div></div><div></div><div></div>
   </div>
@@ -218,7 +221,6 @@
         <button type="submit">Signup</button>
       </form>
       <button id="logoutBtn" style="display:none">Logout</button>
-      <p id="activeUserCount"></p>
       <div id="authConfirm" class="confirmation"></div>
     </section>
 
@@ -362,6 +364,7 @@
       }
     }
 
+    // Submit report
     reportForm.onsubmit = e => {
       e.preventDefault();
       const user = localStorage.getItem('sf_currentUser');
@@ -404,4 +407,5 @@
   </script>
 </body>
 </html>
+
 
