@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StrayFinder</title>
   <style>
     :root {
       --orange: #ff7a33;
       --soft-pink: #ffe4dc;
-      --nardo-gray: #ff7a33;;
+      --nardo-gray: #ff7a33;
       --cream: #fffaf0;
       --navy: #001f3f;
       --white: #ffffff;
@@ -193,7 +193,6 @@
 </head>
 <body>
   <header>StrayFinder 🐾</header>
-
   <p id="activeUserCount">Active users: 0</p>
 
   <div id="burgerBtn">
@@ -205,9 +204,16 @@
     <a href="#report">Report a Cat</a>
     <a href="#reports">View Reports</a>
     <a href="#about-section">About</a>
+    <a href="#joinus">Join Us</a>
   </nav>
 
   <main>
+    <section id="joinus">
+      <h2>🚀 Join Our Mission</h2>
+      <p>Want to make a real-world difference with us? Become a part of the StrayFinder journey. Your skills, your ideas, and your heart can help make lives better for stray cats across the country.</p>
+      <button onclick="document.getElementById('signupForm').scrollIntoView({behavior: 'smooth'});">Sign Up Now</button>
+    </section>
+
     <section id="auth">
       <h2>Login / Signup</h2>
       <form id="loginForm">
@@ -242,28 +248,20 @@
     <section id="about-section">
       <div class="about-block">
         <h2>About the Project</h2>
-        <p>
-          StrayFinder is a web-based platform dedicated to helping people locate, report, and care for stray cats within urban and suburban environments. Our mission is to create a community-driven space where every user can contribute to making a real difference in animal welfare by tracking sightings, sharing information, and helping shelters respond faster.
-        </p>
+        <p>StrayFinder is a web-based platform dedicated to helping people locate, report, and care for stray cats in urban and suburban environments. Our mission is to create a community-driven space where every user can contribute to improving animal welfare by tracking sightings and helping shelters respond faster.</p>
       </div>
       <div class="about-block">
         <h2>About the Team</h2>
-        <p>
-          Created by four driven students — Ido, Yalee, Malak and Ahmad — as part of the MEET program, StrayFinder represents our shared passion for both technology and compassion. We combined our diverse skills to build a clean, responsive interface and a powerful tool that brings together people and causes. Every paw print reported is a step toward a safer environment for these animals.
-        </p>
+        <p>We are Ido (Tel Aviv), Yalee (Jerusalem), Malak (Shfaram), and Ahmad (Tamra). As MEET students, we faced real-world challenges — design disagreements, coding bugs, and time crunches — but we triumphed together through passion and teamwork. Each of us brought something unique, and StrayFinder is our shared vision brought to life.</p>
       </div>
       <div class="about-block">
         <h2>About MEET</h2>
-        <p>
-          MEET (Middle East Entrepreneurs of Tomorrow) is a groundbreaking initiative that unites exceptional Israeli and Palestinian students through the power of technology, entrepreneurship, and collaboration. Backed by MIT, MEET provides an opportunity for youth to connect across cultures and build real-world projects that bring meaningful change to their communities — and beyond.
-        </p>
+        <p>MEET (Middle East Entrepreneurs of Tomorrow) is a groundbreaking initiative supported by MIT. It unites Israeli and Palestinian high schoolers through tech and entrepreneurship, helping young minds connect, collaborate, and build real solutions for real problems. StrayFinder was born from this shared spirit.</p>
       </div>
     </section>
 
     <section id="general-about">
-      <p>
-        StrayFinder is more than just a reporting tool. It's a statement of empathy, responsibility, and tech-powered kindness. We believe every stray deserves to be seen, and every report is a small act of hope.
-      </p>
+      <p>StrayFinder is about kindness, connection, and helping stray cats in real time through a community effort powered by tech and compassion.</p>
     </section>
   </main>
 
@@ -273,7 +271,6 @@
     burgerBtn.addEventListener('mouseenter', () => nav.classList.add('expanded'));
     nav.addEventListener('mouseleave', () => nav.classList.remove('expanded'));
 
-    // Utilities
     function getUsers() {
       return JSON.parse(localStorage.getItem('sf_users')) || {};
     }
@@ -283,11 +280,11 @@
     }
 
     function getReports() {
-      return JSON.parse(localStorage.getItem('sf_reports')) || [];
+      return JSON.parse(localStorage.getItem('sf_reports_global')) || [];
     }
 
     function saveReports(reports) {
-      localStorage.setItem('sf_reports', JSON.stringify(reports));
+      localStorage.setItem('sf_reports_global', JSON.stringify(reports));
     }
 
     function updateActiveUserCount() {
@@ -295,7 +292,6 @@
       document.getElementById('activeUserCount').textContent = `Active users: ${count}`;
     }
 
-    // Elements
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
     const logoutBtn = document.getElementById('logoutBtn');
@@ -304,13 +300,11 @@
     const reportsList = document.getElementById('reportsList');
     const reportConfirm = document.getElementById('reportConfirm');
 
-    // Auth
     loginForm.onsubmit = e => {
       e.preventDefault();
       const email = loginForm.loginEmail.value.trim().toLowerCase();
       const pass = loginForm.loginPassword.value;
       const users = getUsers();
-
       if (users[email] && users[email] === pass) {
         localStorage.setItem('sf_currentUser', email);
         loginForm.style.display = 'none';
@@ -330,13 +324,11 @@
       const email = signupForm.signupEmail.value.trim().toLowerCase();
       const pass = signupForm.signupPassword.value;
       const users = getUsers();
-
       if (users[email]) {
         authConfirm.textContent = 'User already exists.';
         authConfirm.style.display = 'block';
         return;
       }
-
       users[email] = pass;
       saveUsers(users);
       authConfirm.textContent = 'Signup confirmed! Please log in.';
@@ -353,7 +345,6 @@
       authConfirm.style.display = 'block';
     };
 
-    // Reports
     function loadReports() {
       const reports = getReports();
       reportsList.innerHTML = '';
@@ -364,7 +355,6 @@
       }
     }
 
-    // Submit report
     reportForm.onsubmit = e => {
       e.preventDefault();
       const user = localStorage.getItem('sf_currentUser');
@@ -375,9 +365,8 @@
       }
 
       const reports = getReports();
-      const existing = reports.find(r => r.user === user);
-      if (existing) {
-        reportConfirm.textContent = 'You have already submitted a report. Delete it before submitting a new one.';
+      if (reports.some(r => r.user === user)) {
+        reportConfirm.textContent = 'You’ve already submitted a report.';
         reportConfirm.style.display = 'block';
         return;
       }
@@ -389,11 +378,10 @@
       reports.unshift({ user, location, description });
       saveReports(reports);
       loadReports();
-      reportConfirm.textContent = 'Report submitted successfully!';
+      reportConfirm.textContent = 'Report submitted!';
       reportConfirm.style.display = 'block';
     };
 
-    // Init
     document.addEventListener('DOMContentLoaded', () => {
       const user = localStorage.getItem('sf_currentUser');
       if (user) {
